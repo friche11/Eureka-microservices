@@ -1,4 +1,4 @@
-package main.java.com.example.notification_service;
+package com.example.notification_service;
 
 public class Notification {
     
