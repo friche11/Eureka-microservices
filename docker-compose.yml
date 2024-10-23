@@ -1,56 +1,79 @@
-version: '3'
 services:
   eureka-server:
     image: eureka-server
-    container_name: eureka-server
     ports:
       - "8761:8761"
     environment:
       - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
       - EUREKA_CLIENT_FETCH_REGISTRY=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   api-gateway:
     image: api-gateway
-    container_name: api-gateway
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     ports:
       - "8085:8085"
     environment:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   notification-service:
     image: notification-service
-    container_name: notification-service
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     ports:
       - "8084:8084"
     environment:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
       - SPRING_APPLICATION_NAME=notification-service
       - SERVER_PORT=8084
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   user-service:
     image: user-service
-    container_name: user-service
+    deploy:
+      replicas: 3 
     depends_on:
-      - eureka-server
-    ports:
-      - "8083:8083"
+      eureka-server:
+        condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
       - SPRING_APPLICATION_NAME=user-service
       - SERVER_PORT=8083
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   task-service:
     image: task-service
-    container_name: task-service
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     ports:
       - "8082:8082"
     environment:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
       - SPRING_APPLICATION_NAME=task-service
       - SERVER_PORT=8082
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
